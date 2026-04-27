@@ -1,0 +1,195 @@
+# Curated crypto library database — quantum posture of dependencies.
+# Schema: libraries[].{name, ecosystem, exposes[{primitive, quantum_status, ...}], notes}
+
+libraries:
+  # ── Python ────────────────────────────────────────────────
+  - name: cryptography
+    ecosystem: pypi
+    exposes:
+      - {primitive: RSA, quantum_status: vulnerable}
+      - {primitive: ECDSA, quantum_status: vulnerable}
+      - {primitive: DSA, quantum_status: vulnerable}
+      - {primitive: DH, quantum_status: vulnerable}
+      - {primitive: X25519, quantum_status: vulnerable}
+      - {primitive: Ed25519, quantum_status: vulnerable}
+      - {primitive: AES, quantum_status: symmetric_safe}
+      - {primitive: ChaCha20, quantum_status: symmetric_safe}
+      - {primitive: ML-KEM, quantum_status: pqc, introduced_version: "43.0.0"}
+      - {primitive: ML-DSA, quantum_status: pqc, introduced_version: "44.0.0"}
+    notes: "Standard Python crypto library; PQ primitives landed in v43"
+
+  - name: pycryptodome
+    ecosystem: pypi
+    exposes:
+      - {primitive: RSA, quantum_status: vulnerable}
+      - {primitive: DSA, quantum_status: vulnerable}
+      - {primitive: ECC, quantum_status: vulnerable}
+      - {primitive: AES, quantum_status: symmetric_safe}
+      - {primitive: MD5, quantum_status: deprecated}
+      - {primitive: SHA1, quantum_status: deprecated}
+    notes: "Widely used drop-in for legacy PyCrypto; no PQ support"
+
+  - name: pycrypto
+    ecosystem: pypi
+    exposes:
+      - {primitive: RSA, quantum_status: vulnerable}
+      - {primitive: AES, quantum_status: symmetric_safe}
+    notes: "UNMAINTAINED. Deprecated; migrate to pycryptodome or cryptography."
+
+  - name: pyopenssl
+    ecosystem: pypi
+    exposes:
+      - {primitive: RSA, quantum_status: vulnerable}
+      - {primitive: ECDSA, quantum_status: vulnerable}
+    notes: "Thin wrapper over OpenSSL; tracks OpenSSL's crypto posture"
+
+  - name: rsa
+    ecosystem: pypi
+    exposes:
+      - {primitive: RSA, quantum_status: vulnerable}
+    notes: "Pure-Python RSA. Quantum-vulnerable; prefer cryptography for new work."
+
+  - name: ecdsa
+    ecosystem: pypi
+    exposes:
+      - {primitive: ECDSA, quantum_status: vulnerable}
+    notes: "Pure-Python ECDSA."
+
+  - name: PyJWT
+    ecosystem: pypi
+    exposes:
+      - {primitive: RS256, quantum_status: vulnerable}
+      - {primitive: ES256, quantum_status: vulnerable}
+      - {primitive: HS256, quantum_status: symmetric_safe}
+    notes: "JWT library. Algorithm choice is security-critical."
+
+  - name: authlib
+    ecosystem: pypi
+    exposes:
+      - {primitive: RSA, quantum_status: vulnerable}
+      - {primitive: ECDSA, quantum_status: vulnerable}
+    notes: "OAuth/OIDC; wraps classical signing"
+
+  - name: paramiko
+    ecosystem: pypi
+    exposes:
+      - {primitive: RSA, quantum_status: vulnerable}
+      - {primitive: ECDSA, quantum_status: vulnerable}
+      - {primitive: Ed25519, quantum_status: vulnerable}
+    notes: "SSH client"
+
+  - name: hashlib
+    ecosystem: stdlib
+    exposes:
+      - {primitive: MD5, quantum_status: deprecated}
+      - {primitive: SHA1, quantum_status: deprecated}
+      - {primitive: SHA256, quantum_status: symmetric_safe}
+      - {primitive: SHA512, quantum_status: symmetric_safe}
+    notes: "Python stdlib"
+
+  # ── JavaScript / TypeScript ───────────────────────────────
+  - name: crypto
+    ecosystem: node_builtin
+    exposes:
+      - {primitive: RSA, quantum_status: vulnerable}
+      - {primitive: ECDSA, quantum_status: vulnerable}
+      - {primitive: DH, quantum_status: vulnerable}
+      - {primitive: AES, quantum_status: symmetric_safe}
+      - {primitive: MD5, quantum_status: deprecated}
+      - {primitive: SHA1, quantum_status: deprecated}
+    notes: "Node built-in"
+
+  - name: crypto-js
+    ecosystem: npm
+    exposes:
+      - {primitive: MD5, quantum_status: deprecated}
+      - {primitive: SHA1, quantum_status: deprecated}
+      - {primitive: AES, quantum_status: symmetric_safe}
+    notes: "Widely used; frequently misconfigured. No PQ."
+
+  - name: node-forge
+    ecosystem: npm
+    exposes:
+      - {primitive: RSA, quantum_status: vulnerable}
+      - {primitive: AES, quantum_status: symmetric_safe}
+    notes: "Full stack PKI/crypto in JS"
+
+  - name: jsonwebtoken
+    ecosystem: npm
+    exposes:
+      - {primitive: RS256, quantum_status: vulnerable}
+      - {primitive: ES256, quantum_status: vulnerable}
+      - {primitive: HS256, quantum_status: symmetric_safe}
+    notes: "JWT lib. Algorithm choice matters."
+
+  - name: jose
+    ecosystem: npm
+    exposes:
+      - {primitive: RS256, quantum_status: vulnerable}
+      - {primitive: ES256, quantum_status: vulnerable}
+    notes: "Modern JOSE implementation"
+
+  - name: bcrypt
+    ecosystem: npm
+    exposes:
+      - {primitive: bcrypt, quantum_status: symmetric_safe}
+    notes: "Password hashing"
+
+  - name: bcryptjs
+    ecosystem: npm
+    exposes:
+      - {primitive: bcrypt, quantum_status: symmetric_safe}
+    notes: "Pure-JS bcrypt"
+
+  - name: tweetnacl
+    ecosystem: npm
+    exposes:
+      - {primitive: Ed25519, quantum_status: vulnerable}
+      - {primitive: Curve25519, quantum_status: vulnerable}
+    notes: "NaCl port"
+
+  - name: libsodium-wrappers
+    ecosystem: npm
+    exposes:
+      - {primitive: Ed25519, quantum_status: vulnerable}
+      - {primitive: X25519, quantum_status: vulnerable}
+      - {primitive: XChaCha20, quantum_status: symmetric_safe}
+    notes: "libsodium bindings"
+
+  - name: "@noble/hashes"
+    ecosystem: npm
+    exposes:
+      - {primitive: SHA256, quantum_status: symmetric_safe}
+      - {primitive: SHA512, quantum_status: symmetric_safe}
+      - {primitive: SHA3, quantum_status: symmetric_safe}
+    notes: "Audited pure-JS hashes"
+
+  - name: "@noble/curves"
+    ecosystem: npm
+    exposes:
+      - {primitive: secp256k1, quantum_status: vulnerable}
+      - {primitive: P-256, quantum_status: vulnerable}
+      - {primitive: Ed25519, quantum_status: vulnerable}
+    notes: "Audited pure-JS curves"
+
+  - name: "@noble/post-quantum"
+    ecosystem: npm
+    exposes:
+      - {primitive: ML-KEM, quantum_status: pqc}
+      - {primitive: ML-DSA, quantum_status: pqc}
+      - {primitive: SLH-DSA, quantum_status: pqc}
+    notes: "PQ primitives (FIPS 203/204/205)"
+
+  - name: elliptic
+    ecosystem: npm
+    exposes:
+      - {primitive: secp256k1, quantum_status: vulnerable}
+      - {primitive: P-256, quantum_status: vulnerable}
+    notes: "Classic EC lib"
+
+  - name: sjcl
+    ecosystem: npm
+    exposes:
+      - {primitive: AES, quantum_status: symmetric_safe}
+      - {primitive: SHA256, quantum_status: symmetric_safe}
+    notes: "Stanford JS crypto lib"

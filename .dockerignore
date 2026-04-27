@@ -1,0 +1,15 @@
+.git
+.claude
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.mypy_cache
+node_modules
+.env
+.env.*
+!.env.example
+notes.md
+CLAUDE.md
+Markdown text file*.md
+logo.png

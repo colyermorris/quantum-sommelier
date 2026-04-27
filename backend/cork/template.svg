@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F7F3EB"/>
+      <stop offset="100%" stop-color="#E8E0D0"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix values="0 0 0 0 0.17, 0 0 0 0 0.14, 0 0 0 0 0.12, 0 0 0 0.03 0"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="720" fill="url(#bg)"/>
+  <rect width="1200" height="720" filter="url(#grain)" opacity="0.5"/>
+
+  <!-- Border -->
+  <rect x="24" y="24" width="1152" height="672" fill="none" stroke="#2C2420" stroke-width="1.5"/>
+  <rect x="36" y="36" width="1128" height="648" fill="none" stroke="#2C2420" stroke-width="0.6"/>
+
+  <!-- Corner flourishes -->
+  <g stroke="#2C2420" stroke-width="1" fill="none">
+    <path d="M60 60 L60 110 M60 60 L110 60"/>
+    <path d="M1140 60 L1140 110 M1140 60 L1090 60"/>
+    <path d="M60 660 L60 610 M60 660 L110 660"/>
+    <path d="M1140 660 L1140 610 M1140 660 L1090 660"/>
+  </g>
+
+  <!-- Top bar -->
+  <text x="120" y="98" font-family="DejaVu Sans Mono, monospace" font-size="16" fill="#5C534A" letter-spacing="4">VOL I · Nº 04</text>
+  <text x="1080" y="98" font-family="DejaVu Sans Mono, monospace" font-size="16" fill="#5C534A" letter-spacing="4" text-anchor="end">TASTED · CITED · FILED</text>
+
+  <!-- Wordmark -->
+  <text x="600" y="172" font-family="DejaVu Serif, Georgia, serif" font-size="40" fill="#2C2420" text-anchor="middle" font-weight="300" letter-spacing="8">QUANTUM · SOMMELIER</text>
+
+  <!-- Mid rule with ornament -->
+  <line x1="200" y1="200" x2="540" y2="200" stroke="#2C2420" stroke-width="0.8"/>
+  <text x="600" y="207" font-family="DejaVu Serif, Georgia, serif" font-size="24" fill="#722F37" text-anchor="middle" font-style="italic">&amp;</text>
+  <line x1="660" y1="200" x2="1000" y2="200" stroke="#2C2420" stroke-width="0.8"/>
+
+  <!-- Repo kicker + name -->
+  <text x="120" y="270" font-family="DejaVu Sans, sans-serif" font-size="16" fill="#8A7E72" letter-spacing="6">A TASTING NOTE FOR</text>
+  <text x="120" y="326" font-family="DejaVu Sans Mono, monospace" font-size="42" fill="#2C2420" font-weight="600">{{REPO_SLUG}}</text>
+  <text x="120" y="358" font-family="DejaVu Sans Mono, monospace" font-size="16" fill="#5C534A">{{REPO_META}}</text>
+
+  <!-- Grade medallion -->
+  <g transform="translate(960, 260)">
+    <circle cx="80" cy="80" r="84" fill="none" stroke="#2C2420" stroke-width="1.2"/>
+    <circle cx="80" cy="80" r="72" fill="{{GRADE_BG}}" opacity="0.15"/>
+    <circle cx="80" cy="80" r="72" fill="none" stroke="{{GRADE_BG}}" stroke-width="1.2"/>
+    <text x="80" y="115" font-family="DejaVu Serif, Georgia, serif" font-size="96" fill="{{GRADE_BG}}" text-anchor="middle" font-weight="700">{{GRADE}}</text>
+  </g>
+
+  <!-- Pull quote -->
+  <text x="600" y="420" font-family="DejaVu Serif, Georgia, serif" font-size="28" fill="#2C2420" text-anchor="middle" font-style="italic">{{PULL_QUOTE_LINE_1}}</text>
+  <text x="600" y="458" font-family="DejaVu Serif, Georgia, serif" font-size="28" fill="#2C2420" text-anchor="middle" font-style="italic">{{PULL_QUOTE_LINE_2}}</text>
+
+  <!-- Bottom rule -->
+  <line x1="120" y1="500" x2="1080" y2="500" stroke="#2C2420" stroke-width="0.6"/>
+
+  <!-- Axes -->
+  <g transform="translate(120, 530)">
+    <text x="0" y="0" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#8A7E72" letter-spacing="3">AXIS SCORES</text>
+    <g transform="translate(0, 20)">
+      <text x="0" y="14" font-family="DejaVu Sans Mono, monospace" font-size="13" fill="#2C2420">HNDL</text>
+      <rect x="60" y="4" width="200" height="12" fill="#E8E0D0"/>
+      <rect x="60" y="4" width="{{HNDL_W}}" height="12" fill="#722F37"/>
+      <text x="268" y="14" font-family="DejaVu Sans Mono, monospace" font-size="13" fill="#2C2420">{{HNDL}}</text>
+    </g>
+    <g transform="translate(0, 44)">
+      <text x="0" y="14" font-family="DejaVu Sans Mono, monospace" font-size="13" fill="#2C2420">SIG</text>
+      <rect x="60" y="4" width="200" height="12" fill="#E8E0D0"/>
+      <rect x="60" y="4" width="{{SIG_W}}" height="12" fill="#722F37"/>
+      <text x="268" y="14" font-family="DejaVu Sans Mono, monospace" font-size="13" fill="#2C2420">{{SIG}}</text>
+    </g>
+    <g transform="translate(340, 20)">
+      <text x="0" y="14" font-family="DejaVu Sans Mono, monospace" font-size="13" fill="#2C2420">HYG</text>
+      <rect x="60" y="4" width="200" height="12" fill="#E8E0D0"/>
+      <rect x="60" y="4" width="{{HYG_W}}" height="12" fill="#722F37"/>
+      <text x="268" y="14" font-family="DejaVu Sans Mono, monospace" font-size="13" fill="#2C2420">{{HYG}}</text>
+    </g>
+    <g transform="translate(340, 44)">
+      <text x="0" y="14" font-family="DejaVu Sans Mono, monospace" font-size="13" fill="#2C2420">PQA</text>
+      <rect x="60" y="4" width="200" height="12" fill="#E8E0D0"/>
+      <rect x="60" y="4" width="{{PQA_W}}" height="12" fill="#722F37"/>
+      <text x="268" y="14" font-family="DejaVu Sans Mono, monospace" font-size="13" fill="#2C2420">{{PQA}}</text>
+    </g>
+  </g>
+
+  <!-- Foot -->
+  <text x="120" y="660" font-family="DejaVu Sans Mono, monospace" font-size="13" fill="#8A7E72">{{RUBRIC_VERSION}}</text>
+  <text x="600" y="660" font-family="DejaVu Serif, Georgia, serif" font-size="13" fill="#8A7E72" text-anchor="middle" font-style="italic">A Morris Mediocre Masterpiece.</text>
+  <text x="1080" y="660" font-family="DejaVu Sans Mono, monospace" font-size="13" fill="#8A7E72" text-anchor="end">{{SCANNED_AT}}</text>
+</svg>

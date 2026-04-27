@@ -1,0 +1,12 @@
+services:
+  quantum-sommelier:
+    build: .
+    image: quantum-sommelier:latest
+    container_name: quantum-sommelier
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8080:8080"
+    # Scratch space for ephemeral clones. tmpfs avoids disk IO + auto-clears.
+    tmpfs:
+      - /tmp/qs-work:mode=700,size=1g

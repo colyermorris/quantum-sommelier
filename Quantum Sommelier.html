@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Sommelier</title>
+<meta name="description" content="Post-quantum readiness screening for public GitHub repos. Real analysis. Committed sommelier.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=9">
+<link rel="stylesheet" href="styles-components.css?v=9">
+<link rel="stylesheet" href="styles-tasting.css?v=9">
+<link rel="stylesheet" href="styles-cork.css?v=9">
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="data.js?v=9"></script>
+<script type="text/babel" src="landing.jsx?v=9"></script>
+<script type="text/babel" src="scanning.jsx?v=9"></script>
+<script type="text/babel" src="tasting.jsx?v=9"></script>
+<script type="text/babel" src="overlays.jsx?v=9"></script>
+
+<script type="text/babel">
+function SiteHeader({ onHome, tweaks, view }) {
+  return (
+    <div className="site site--topbar">
+      <nav className="site-nav" data-view={view}>
+        <a className="nav-wordmark" onClick={(e) => { e.preventDefault(); onHome(); }} href="#home">
+          <svg className="nav-glyph" viewBox="0 0 28 32" width="22" height="26" aria-hidden>
+            {/* Wine glass bowl */}
+            <path d="M5 3 Q5 15 14 15 Q23 15 23 3 Z"
+                  fill="var(--color-oxblood)" opacity="0.18"/>
+            <path d="M5 3 Q5 15 14 15 Q23 15 23 3 Z"
+                  fill="none" stroke="var(--color-oxblood)" strokeWidth="1.2" strokeLinejoin="round"/>
+            {/* Meniscus line near the top of the wine */}
+            <path d="M6.5 5 Q10 6.5 14 6.5 Q18 6.5 21.5 5"
+                  fill="none" stroke="var(--color-oxblood)" strokeWidth="0.9" opacity="0.7"/>
+            {/* The "wine" — a little </> mark inside */}
+            <text x="14" y="12" textAnchor="middle"
+                  fontSize="6.2" fontFamily="ui-monospace, 'JetBrains Mono', monospace"
+                  fontWeight="600" fill="var(--color-oxblood)" letterSpacing="-0.3">&lt;/&gt;</text>
+            {/* Stem */}
+            <line x1="14" y1="15" x2="14" y2="27" stroke="var(--color-ink)" strokeWidth="1.1" strokeLinecap="round"/>
+            {/* Base */}
+            <line x1="8" y1="29" x2="20" y2="29" stroke="var(--color-ink)" strokeWidth="1.4" strokeLinecap="round"/>
+            <ellipse cx="14" cy="29" rx="6" ry="1.2" fill="none" stroke="var(--color-ink)" strokeWidth="0.4" opacity="0.35"/>
+          </svg>
+          <span>Quantum Sommelier</span>
+        </a>
+        <div className="nav-meta">
+          <span className="issue">VOL I · NO. 04</span>
+          <span className="dot" />
+          <span>April 2026</span>
+          <span className="dot" />
+          <span>qs-rubric-1.0.0</span>
+        </div>
+      </nav>
+    </div>
+  );
+}
+
+function SiteFooter() {
+  return (
+    <div className="site">
+      <footer className="site-footer">
+        <div className="footer-mark">A Morris Mediocre Masterpiece.</div>
+        <div className="footer-meta">
+          <div>Rubric qs-rubric-1.0.0 · Vintage April 2026</div>
+          <div>Tastings are opinions, not audits.</div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "ornament": "cellar-key",
+  "scoreChart": "bars",
+  "gradeVariant": "pill",
+  "wordmark": "wonky",
+  "temp": "default",
+  "heroHeadline": "random"
+}/*EDITMODE-END*/;
+
+const STORAGE_KEY = 'quantum-sommelier-state-v2';
+
+// ── API client ────────────────────────────────────────────────
+window.QS_API = (() => {
+  const base = (window.location.origin || '') + '/api/v1';
+  const j = async (res) => {
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok && res.status !== 202) {
+      const err = new Error(body?.error?.message || body?.detail?.message || 'Request failed');
+      err.status = res.status;
+      err.body = body;
+      throw err;
+    }
+    return body;
+  };
+  return {
+    trending: () => fetch(base + '/trending').then(j),
+    startTasting: (repoUrl) => fetch(base + '/tastings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repo_url: repoUrl, ref: 'main' }),
+    }).then(j),
+    pollTasting: (jobId) => fetch(base + '/tastings/' + jobId).then(j),
+    corkPngUrl: (jobId) => base + '/tastings/' + jobId + '/cork.png',
+  };
+})();
+
+// Educational templates for finding detail panels.
+// Keyed by (algorithm || category). Falls back to generic text.
+window.FINDING_EDU = {
+  RSA: {
+    what: "RSA is a public-key cryptosystem whose security rests on the difficulty of factoring large semiprimes. It's used for key exchange, digital signatures, and sometimes bulk encryption.",
+    why_pqc: "Shor's algorithm on a sufficiently large quantum computer factors RSA moduli in polynomial time. Every RSA key size — 2048, 3072, even 4096 bits — is broken by a cryptographically-relevant quantum computer. RSA has no quantum safety margin.",
+    remediation: "Plan a migration to NIST-standardized post-quantum primitives. For key exchange, use ML-KEM (Kyber); for signatures, ML-DSA (Dilithium) or SLH-DSA (SPHINCS+). Deploy hybrid modes (classical + PQ) during the transition."
+  },
+  ECDSA: {
+    what: "ECDSA is the elliptic-curve variant of DSA, widely used for digital signatures in TLS, JWT, and blockchain systems. Common curves: P-256, P-384, secp256k1.",
+    why_pqc: "Shor's algorithm solves the elliptic-curve discrete logarithm problem too. Every named ECDSA curve falls to the same quantum machine that breaks RSA, at lower key sizes and with less quantum resource.",
+    remediation: "Replace ECDSA signatures with ML-DSA (Dilithium) or SLH-DSA (SPHINCS+). For code-signing and long-lived signatures, plan the migration now — signatures minted today are verified for years."
+  },
+  ECDH: {
+    what: "Elliptic-curve Diffie-Hellman is the key-exchange half of most modern TLS handshakes and secure messaging protocols. Same curves as ECDSA.",
+    why_pqc: "HNDL (Harvest-Now-Decrypt-Later): a network observer can record today's ECDH handshakes and decrypt them once a CRQC exists. Secrecy expires retroactively.",
+    remediation: "Move to hybrid ML-KEM + X25519 in TLS 1.3 (RFC draft-ietf-tls-hybrid-design). Chrome and Cloudflare already deploy X25519MLKEM768."
+  },
+  MD5: {
+    what: "MD5 is a 128-bit hash function. Collision attacks have been practical since 2004; preimage attacks are still infeasible classically.",
+    why_pqc: "Grover's algorithm gives a quadratic speedup on preimage search, halving the effective bit-strength of any hash. MD5's 64-bit post-quantum preimage security is catastrophic. But the real issue is MD5 is already broken *classically* — this isn't primarily a quantum problem.",
+    remediation: "Replace MD5 with SHA-256 at minimum; SHA-384 or SHA-3-384 for new systems. For HMAC specifically, even HMAC-MD5 retains some strength but should still be rotated out."
+  },
+  SHA1: {
+    what: "SHA-1 is a 160-bit hash function. SHAttered (2017) demonstrated practical chosen-prefix collisions. Deprecated by NIST, CA/Browser Forum, and effectively every serious cryptographic standard.",
+    why_pqc: "Grover halves preimage security to 80 bits, which is uncomfortably close to feasible. But again, SHA-1's classical collision attacks already disqualify it.",
+    remediation: "Upgrade to SHA-256 for general hashing, SHA-384 where extra margin is warranted. For HMAC, HMAC-SHA-256."
+  },
+  DES: {
+    what: "DES (and its successor 3DES) is a symmetric block cipher from the 1970s. Banned by NIST for new systems in 2017; 3DES formally deprecated in 2023.",
+    why_pqc: "Grover reduces DES's 56-bit key to 28 bits effective — trivially brute-forceable. 3DES fares marginally better but is still below modern thresholds.",
+    remediation: "AES-256 in GCM or ChaCha20-Poly1305 for authenticated encryption. Never deploy DES or 3DES in new code."
+  },
+  AES: {
+    what: "AES is the NIST-standard symmetric block cipher. AES-128, AES-192, and AES-256 are all FIPS-approved.",
+    why_pqc: "Grover gives a square-root speedup on key search. AES-128's 128-bit key drops to 64-bit effective post-quantum — borderline. AES-256 retains a full 128-bit margin and is considered quantum-safe.",
+    remediation: "Prefer AES-256 for new deployments, especially for data with a long confidentiality horizon. AES-128 is acceptable for short-lived session keys."
+  }
+};
+
+window.FINDING_CATEGORY_EDU = {
+  committed_secret: {
+    what: "A credential — API key, private key, token, or password — was committed to the repository. Git history preserves it even if later removed.",
+    why_pqc: "This is a classical compromise, not a quantum one: the secret is already out. Post-quantum considerations are moot if the credential itself has leaked.",
+    remediation: "Rotate the secret immediately with the issuing provider. Purge from git history (BFG Repo-Cleaner or git-filter-repo). Add a pre-commit secret scanner (gitleaks, trufflehog)."
+  },
+  config_weakness: {
+    what: "A configuration file declares a cipher suite, key size, or protocol option that is weaker than current best practice.",
+    why_pqc: "Misconfiguration compounds cryptographic debt: a strong algorithm deployed with weak parameters is no better than a weak algorithm.",
+    remediation: "Align with CNSA 2.0 or Mozilla's 'Modern' TLS configuration. Remove deprecated cipher suites; pin minimum protocol versions."
+  },
+  deprecated_primitive: {
+    what: "An algorithm that has been formally deprecated by a standards body (NIST, IETF, CA/Browser Forum) appears in code or dependencies.",
+    why_pqc: "Deprecated primitives are ahead of PQ in the queue — they're already broken or on-track to be broken by classical attacks before quantum even matters.",
+    remediation: "Replace with the standards body's recommended successor. Document the migration path in a SECURITY.md or ADR."
+  },
+  pqc_adoption: {
+    what: "The repository is actively using a post-quantum primitive — ML-KEM, ML-DSA, SLH-DSA, or a hybrid construction.",
+    why_pqc: "This is the good news. The codebase has begun the transition and is ahead of the curve on CNSA 2.0 timelines.",
+    remediation: "Verify the parameter sets match NIST final standards (FIPS 203/204/205). Ensure hybrid modes combine PQ with a classical primitive, not PQ alone."
+  },
+  hybrid_scheme: {
+    what: "A hybrid construction combines a classical primitive (e.g., X25519) with a post-quantum primitive (e.g., ML-KEM) so the result is at least as secure as the stronger of the two.",
+    why_pqc: "This is the recommended migration strategy. The classical half guards against flaws in the still-new PQ algorithms; the PQ half guards against future quantum attacks.",
+    remediation: "Confirm the hybrid combines components with independent assumptions. Follow RFC 9180 (HPKE) or the TLS hybrid KEM drafts."
+  },
+  quantum_vulnerable: {
+    what: "A primitive whose security is broken by a cryptographically-relevant quantum computer (CRQC) — RSA, ECDSA, ECDH, DH, classical DSA.",
+    why_pqc: "These are the primary targets of the PQ migration. Any traffic or signature produced with these primitives loses confidentiality or authenticity once a CRQC exists.",
+    remediation: "Inventory every call site, then migrate to the NIST PQ suite or a hybrid. Prioritize long-lived signatures and high-value secrets."
+  },
+  suspected: {
+    what: "The scanner surfaced a candidate that could be a cryptographic primitive but the judge wasn't fully confident — often a variable name or string that looks cryptographic in context.",
+    why_pqc: "Cannot assess without confirming the finding. Worth a human glance.",
+    remediation: "Review the flagged line. If it's a real crypto call, treat it according to its algorithm; if it's a false positive (e.g., 'RSA' standing for 'Regional Sales Authority'), close it."
+  }
+};
+
+// Library-keyed edu. Takes priority over algorithm / category when a finding
+// has a .library set (e.g. import-consolidated findings).
+window.FINDING_LIBRARY_EDU = {
+  "cryptography": {
+    what: "pyca/cryptography is the serious Python crypto library — AES, RSA, ECDSA, ECDH, Ed25519, x25519, Fernet, HMAC, HKDF, X.509. The surface area is almost entirely classical.",
+    why_pqc: "No post-quantum primitives yet. RSA and the EC families are exactly what Shor's algorithm breaks; the AES and hash primitives are Grover-diminished but not broken. A repo that leans on pyca/cryptography will have a wide classical blast radius to migrate.",
+    remediation: "Inventory every call site (sign/verify, encrypt/decrypt, key exchange). Tag each with its confidentiality horizon. When NIST PQ wrappers land in pyca, migrate long-horizon call sites to ML-KEM/ML-DSA. Hybrid until the PQ algorithms age a few years in production."
+  },
+  "pycrypto(dome)": {
+    what: "PyCrypto / PyCryptodome — classical symmetric and public-key primitives. PyCrypto itself is unmaintained; PyCryptodome is the active fork.",
+    why_pqc: "No PQ algorithms. AES/SHA are Grover-weakened; RSA/DSA/ECDSA are Shor-broken. In any long-horizon use, this library is on the migration list.",
+    remediation: "Prefer pyca/cryptography for new work; it has a more careful API and active maintenance. Plan PQ migration identically to pyca's classical surface."
+  },
+  "rsa": {
+    what: "The `rsa` package — pure-Python RSA key generation, signing, and encryption. Simple API, narrow surface.",
+    why_pqc: "RSA is broken in polynomial time by Shor's algorithm on a CRQC. Every bit of RSA in this repo is quantum-vulnerable regardless of key size.",
+    remediation: "Migrate signatures to ML-DSA (CRYSTALS-Dilithium) and key exchange / encryption to ML-KEM (CRYSTALS-Kyber). Use hybrid (RSA + ML-KEM) during the transition period."
+  },
+  "ecdsa": {
+    what: "Pure-Python ECDSA — elliptic-curve digital signatures over NIST curves, secp256k1, and Ed25519-adjacent curves.",
+    why_pqc: "ECDSA's security reduces to the elliptic-curve discrete log problem, which Shor's algorithm also solves in polynomial time. Broken by a CRQC across every curve.",
+    remediation: "Migrate to ML-DSA or SLH-DSA. Hybrid signatures (ECDSA + PQ) during the transition preserve security against both classical and quantum attackers."
+  },
+  "PyJWT": {
+    what: "PyJWT signs and verifies JSON Web Tokens. Common algorithms: HS256 (symmetric), RS256 (RSA), ES256 (ECDSA over P-256), EdDSA.",
+    why_pqc: "RS256, ES256, EdDSA are all quantum-vulnerable signature algorithms. HS256 (HMAC) is Grover-weakened but still practical with a 256-bit key. No standardized PQ JWT algorithms exist yet — draft-ietf-cose-post-quantum-signatures is moving.",
+    remediation: "For long-lived tokens, plan to adopt COSE PQ signatures when standardized. For short-lived tokens (<1 hour), the quantum risk is lower. Audit which algorithm each service accepts and drop RSA ≤ 2048."
+  },
+  "paramiko": {
+    what: "Paramiko is an SSH-2 protocol implementation in Python — key exchange, host-key verification, authenticated channels.",
+    why_pqc: "SSH host keys (RSA / ECDSA / Ed25519) and key exchange (classical DH / ECDH) are quantum-vulnerable. OpenSSH is rolling out sntrup761x25519 and ML-KEM hybrids; paramiko lags.",
+    remediation: "Track paramiko's PQ roadmap. For high-value SSH sessions, prefer OpenSSH's hybrid KEX today via the `ssh` CLI until paramiko catches up."
+  },
+  "node:crypto": {
+    what: "Node.js built-in crypto module — wraps the OpenSSL/BoringSSL runtime. Exposes symmetric ciphers, RSA/EC keys, hashes, HKDF, KDFs, and `getRandomValues` via `webcrypto`.",
+    why_pqc: "Most node:crypto use is classical — RSA-OAEP, RSA-PSS, ECDSA, ECDH. Node added ML-KEM/ML-DSA through OpenSSL 3.2+ providers in recent versions, but usage is still rare.",
+    remediation: "Audit which primitives the codebase actually calls (`createSign`, `generateKeyPair`, `diffieHellman`). Plan to swap to `ml-kem` / `ml-dsa` wrappers as Node exposes them, or use @noble/post-quantum for pure-JS PQ."
+  },
+  "@noble/post-quantum": {
+    what: "@noble/post-quantum — audited pure-JS implementations of ML-KEM, ML-DSA, and SLH-DSA (NIST final standards FIPS 203/204/205).",
+    why_pqc: "This IS the PQ path. A repo depending on this library is already executing the post-quantum migration in JavaScript.",
+    remediation: "Verify parameter sets match FIPS finals (ML-KEM-768, ML-DSA-65, SLH-DSA-128s recommended for most use cases). Prefer hybrid constructions: wrap with a classical primitive via @noble/curves for defense in depth during the PQ algorithms' early years."
+  },
+  "@noble/hashes": {
+    what: "@noble/hashes — audited pure-JS hash primitives: SHA-2, SHA-3, BLAKE2/3, HMAC, HKDF, PBKDF2, scrypt.",
+    why_pqc: "Hashes are weakened by Grover (effective strength halved) but not broken. SHA-256 remains ~128-bit post-Grover, which is marginally acceptable. Nothing here is Shor-broken.",
+    remediation: "For long-horizon use, prefer SHA-384 / SHA-512 / SHA-3 to keep ≥192-bit post-Grover margin. HMAC is fine at SHA-256."
+  },
+  "@noble/curves": {
+    what: "@noble/curves — audited pure-JS elliptic-curve primitives: secp256k1, P-256, P-384, P-521, Ed25519, x25519, BLS12-381.",
+    why_pqc: "All of these curves are quantum-vulnerable. Ed25519 and x25519 are classically stronger than the NIST P-curves but fall to Shor just the same.",
+    remediation: "For new signatures / KEX on long-horizon systems, prefer @noble/post-quantum. Classical curves remain fine for short-horizon use or hybrid constructions."
+  },
+  "crypto-js": {
+    what: "crypto-js — legacy pure-JS crypto library: AES, DES, Triple-DES, RC4, Rabbit, SHA-1/2/3, HMAC, PBKDF2.",
+    why_pqc: "Presence of crypto-js is a soft yellow flag even before PQ — the library ships weak defaults (ECB mode when you ask for AES with no mode, odd IV handling) and DES/RC4 are entirely broken classically. Whatever PQ roadmap follows, get off crypto-js first.",
+    remediation: "Migrate to @noble/hashes + @noble/ciphers or the WebCrypto API. For PQ, pair WebCrypto with @noble/post-quantum."
+  },
+  "jsonwebtoken": {
+    what: "jsonwebtoken — Node.js library for signing and verifying JSON Web Tokens. Shares algorithm names with PyJWT (HS256/RS256/ES256/EdDSA).",
+    why_pqc: "Same story as PyJWT: RS256, ES256, EdDSA are all quantum-vulnerable. No PQ JWT algorithms standardized yet.",
+    remediation: "Shorten token lifetimes where possible. Track IETF COSE PQ signatures work. For RS256, enforce ≥ 3072-bit keys as a near-term mitigation."
+  },
+  "hashlib": {
+    what: "hashlib — Python standard library hash primitives: MD5, SHA-1, SHA-2, SHA-3, BLAKE2, plus PBKDF2 and scrypt KDFs.",
+    why_pqc: "Hashes are Grover-weakened, not Shor-broken. SHA-256 → ~128-bit post-Grover, which is marginal for long-horizon applications. MD5/SHA-1 are already broken classically for collision resistance.",
+    remediation: "Audit each call for whether classical collision resistance is required (signatures, commitments) versus just preimage (HMAC). Prefer SHA-384 / SHA-3-256 / BLAKE2 for new work on long-horizon systems."
+  }
+};
+
+// Normalize API tasting into the shape the JSX components expect.
+window.normalizeTasting = (t) => {
+  if (!t) return null;
+  const eduFor = (f) => {
+    const byLib = f.library && window.FINDING_LIBRARY_EDU[f.library];
+    const byAlg = f.algorithm && window.FINDING_EDU[f.algorithm.toUpperCase().replace(/[- ]/g, '')];
+    const byCat = f.category && window.FINDING_CATEGORY_EDU[f.category];
+    return byLib || byAlg || byCat || {
+      what: f.rule_description || "The scanner flagged this pattern for sommelier review.",
+      why_pqc: "Any cryptographic primitive requires a post-quantum audit: if it's classical RSA/ECC/DH, it's on the migration list. If it's a hash, Grover cuts the bit-strength in half. If it's symmetric with a 128-bit key, the margin is narrow but intact.",
+      remediation: "Consult the NIST PQC migration guide (NIST IR 8547). Inventory every usage site, triage by confidentiality horizon, schedule replacement with ML-KEM / ML-DSA / SLH-DSA as appropriate."
+    };
+  };
+  const normFindings = (t.findings || []).map((f) => {
+    const edu = eduFor(f);
+    return {
+      ...f,
+      short: f.short || f.rule_description || f.id,
+      file: f.file || f.file_path || '',
+      lines: f.lines || (f.line_start && f.line_end ? (f.line_start === f.line_end ? String(f.line_start) : `${f.line_start}-${f.line_end}`) : ''),
+      snippet: f.snippet || f.code_snippet || '',
+      what: f.what || edu.what,
+      why_pqc: f.why_pqc || edu.why_pqc,
+      remediation: f.remediation || edu.remediation,
+    };
+  });
+  return {
+    ...t,
+    repo: { ...t.repo, language: t.repo.primary_language || t.repo.language || 'unknown' },
+    palate: { paragraphs: (t.palate && t.palate.prose) || [] },
+    finish: { prose: ((t.finish && t.finish.prose) || []).join('\n\n') },
+    findings: normFindings,
+  };
+};
+
+function App() {
+  const persisted = React.useMemo(() => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
+  }, []);
+  const [tweaks, setTweaks] = React.useState({ ...TWEAK_DEFAULTS, ...(persisted.tweaks || {}) });
+  const [tweaksOpen, setTweaksOpen] = React.useState(false);
+  const [view, setView] = React.useState('landing'); // landing | scanning | tasting
+  const [repoSlug, setRepoSlug] = React.useState('');
+  const [jobId, setJobId] = React.useState(null);
+  const [tasting, setTasting] = React.useState(null);
+  const [rateLimitMsg, setRateLimitMsg] = React.useState(null);
+  const [drawerFinding, setDrawerFinding] = React.useState(null);
+  const [corkOpen, setCorkOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ tweaks }));
+  }, [tweaks]);
+
+  React.useEffect(() => {
+    document.body.dataset.temp = tweaks.temp;
+    document.body.dataset.wordmark = tweaks.wordmark;
+  }, [tweaks.temp, tweaks.wordmark]);
+
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type === '__activate_edit_mode') setTweaksOpen(true);
+      if (e.data?.type === '__deactivate_edit_mode') setTweaksOpen(false);
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  const startScan = async (slugOrUrl) => {
+    setRateLimitMsg(null);
+    const repoUrl = /^https?:\/\//.test(slugOrUrl)
+      ? slugOrUrl
+      : `https://github.com/${slugOrUrl}`;
+    setRepoSlug(slugOrUrl);
+    setTasting(null);
+    setView('scanning');
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    try {
+      const { job_id } = await window.QS_API.startTasting(repoUrl);
+      setJobId(job_id);
+    } catch (err) {
+      if (err.status === 429) {
+        setRateLimitMsg(err.body?.error?.message || "The cellar is shut — too many tastings this hour.");
+        setView('landing');
+      } else {
+        setRateLimitMsg(err.body?.detail?.message || err.message || 'Could not start tasting.');
+        setView('landing');
+      }
+    }
+  };
+
+  const finishScan = (apiTasting) => {
+    setTasting(window.normalizeTasting(apiTasting));
+    setView('tasting');
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  };
+  const goHome = () => {
+    setView('landing');
+    setJobId(null);
+    setTasting(null);
+    setDrawerFinding(null);
+    setCorkOpen(false);
+  };
+
+  return (
+    <>
+      <SiteHeader onHome={goHome} tweaks={tweaks} view={view} />
+      {view === 'landing' && <Landing onScan={startScan} tweaks={tweaks} rateLimitMsg={rateLimitMsg} />}
+      {view === 'scanning' && (
+        <Scanning
+          repoSlug={repoSlug}
+          jobId={jobId}
+          onDone={finishScan}
+          onCancel={goHome}
+          onError={(msg) => { setRateLimitMsg(msg); setView('landing'); }}
+          tweaks={tweaks}
+        />
+      )}
+      {view === 'tasting' && tasting && (
+        <TastingResult
+          tasting={tasting}
+          jobId={jobId}
+          tweaks={tweaks}
+          onBack={goHome}
+          onOpenDrawer={(id) => setDrawerFinding(id || tasting.findings[0]?.id)}
+          onOpenCork={() => setCorkOpen(true)}
+        />
+      )}
+      {view === 'tasting' && tasting && drawerFinding && (
+        <VineyardDrawer tasting={tasting} openId={drawerFinding} onClose={() => setDrawerFinding(null)} />
+      )}
+      {view === 'tasting' && tasting && corkOpen && (
+        <CorkModal tasting={tasting} jobId={jobId} tweaks={tweaks} onClose={() => setCorkOpen(false)} />
+      )}
+      <SiteFooter />
+      {tweaksOpen && <TweaksPanel tweaks={tweaks} setTweaks={(next) => {
+        const changed = {};
+        Object.keys(next).forEach(k => { if (next[k] !== tweaks[k]) changed[k] = next[k]; });
+        setTweaks(next);
+        if (Object.keys(changed).length) {
+          window.parent.postMessage({ type: '__edit_mode_set_keys', edits: changed }, '*');
+        }
+      }} onClose={() => setTweaksOpen(false)} />}
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
