@@ -36,7 +36,7 @@ class Settings:
     scan_timeout_s: int = field(default_factory=lambda: _env_int("QS_SCAN_TIMEOUT_S", 120))
 
     per_ip_tastings_per_hour: int = field(default_factory=lambda: _env_int("QS_PER_IP_LIMIT", 5))
-    global_tastings_per_hour: int = field(default_factory=lambda: _env_int("QS_GLOBAL_LIMIT", 100))
+    global_tastings_per_hour: int = field(default_factory=lambda: _env_int("QS_GLOBAL_LIMIT", 7))
 
     llm_input_token_budget: int = field(default_factory=lambda: _env_int("QS_LLM_INPUT_BUDGET", 50_000))
     llm_output_token_budget: int = field(default_factory=lambda: _env_int("QS_LLM_OUTPUT_BUDGET", 10_000))
