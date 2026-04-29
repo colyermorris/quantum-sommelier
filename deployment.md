@@ -6,6 +6,22 @@ Target: ride along on the existing **charlesmorris.dev** EC2 host as a separate 
 - **Container port:** `8080` (loopback only in prod)
 - **Fronted by:** existing host nginx (TLS termination + reverse proxy)
 - **Coexistence:** the portfolio's vhosts on `:80/:443` are untouched. We add one new server block.
+- **Portfolio entry:** listed on `https://charlesmorris.dev/projects` — entry is hardcoded in `/var/www/charlesmorris.dev/site/src/pages/Projects.tsx` (Vite + React + TS). After editing, run `npm run build` in that dir and atomically swap `dist/` into `/var/www/charlesmorris.dev/html/`.
+
+## Host facts (for next time)
+
+| Thing | Value |
+|---|---|
+| EC2 Elastic IP | `3.138.161.64` |
+| Instance | `i-01b43706fd019b258` (us-east-2c, AL2023) |
+| SSH user / key | `ec2-user` / `~/.ssh/charlesworklaptoppersonal.pem` |
+| SG inbound | 22, 80, 443, 5173 — all `0.0.0.0/0` |
+| Security group | `sg-0bbb19fa922ed4053` (launch-wizard-3) |
+| Portfolio root | `/var/www/charlesmorris.dev/html/` (built bundle); source in `…/site/` |
+| Portfolio nginx | `/etc/nginx/conf.d/charlesmorris.dev.conf` (do not edit) |
+| QS deploy dir | `/opt/quantum-sommelier/` |
+| QS nginx | `/etc/nginx/conf.d/quantum-sommelier.conf` (managed by `scripts/deploy-ec2.sh`) |
+| QS cert | `/etc/letsencrypt/live/quantum-sommelier.charlesmorris.dev/` |
 
 ---
 
@@ -276,3 +292,6 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 | All tastings return generic LLM text | missing/invalid `ANTHROPIC_API_KEY` | check `.env`, watch logs for `AnthropicError` |
 | Cork PNG looks like SVG / wrong content-type | `resvg-py` failed silently — fonts missing | rebuild image (Dockerfile installs `fonts-dejavu-core` + `fonts-liberation`) |
 | Cert renewal silently fails | webroot path mismatch with nginx config | confirm `/var/www/letsencrypt` exists and the HTTP server block points at it |
+| `docker compose ... unknown shorthand flag: 'f'` after fresh AL2023 docker install | AL2023 has no `docker-compose-plugin` rpm — Compose v2 plugin must be installed manually | `scripts/deploy-ec2.sh` now drops the official static binary into `/usr/local/lib/docker/cli-plugins/docker-compose`; re-run the script |
+| `certbot: No such authorization` on first issuance | stale ACME account state from a prior partial run on this box (no certs present locally) | re-run `certbot certonly --webroot -w /var/www/letsencrypt -d <domain> --non-interactive --agree-tos -m <email>` once and the script will pick the cert up on the next pass |
+| SSH `Connection timed out during banner exchange` from a campus / restrictive network | the upstream network (e.g. UNCC Wi-Fi) is dropping outbound port 22, not the EC2 box | verify off-network: `nc -vz 3.138.161.64 22`. If it works off-campus, the issue is your network, not sshd. AL2023's sshd shows `MaxStartups`-throttle entries but those self-clear in ~6 min |

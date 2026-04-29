@@ -89,11 +89,22 @@ else
   log "Docker present: $(docker --version)"
 fi
 
-# Compose v2 plugin sanity
-docker compose version >/dev/null 2>&1 || {
+# Compose v2 plugin sanity. AL2023 has no docker-compose-plugin rpm — pull the
+# official static binary into /usr/local/lib/docker/cli-plugins/ instead.
+if ! docker compose version >/dev/null 2>&1; then
   log "Installing docker compose v2 plugin ..."
-  if [[ $PKG == yum ]]; then yum_install docker-compose-plugin || true; fi
-}
+  if [[ $PKG == apt ]]; then
+    apt_install docker-compose-plugin
+  else
+    DC_VER="v2.29.7"
+    DC_DIR="/usr/local/lib/docker/cli-plugins"
+    mkdir -p "$DC_DIR"
+    curl -fsSL "https://github.com/docker/compose/releases/download/${DC_VER}/docker-compose-linux-x86_64" \
+      -o "$DC_DIR/docker-compose"
+    chmod +x "$DC_DIR/docker-compose"
+  fi
+  docker compose version >/dev/null 2>&1 || err "docker compose still not available after install"
+fi
 
 # ── 4. Ensure nginx + certbot are installed ─────────────────────
 if ! command -v nginx >/dev/null; then

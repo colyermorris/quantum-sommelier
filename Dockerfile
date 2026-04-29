@@ -41,7 +41,7 @@ COPY backend /app/backend
 
 # Copy frontend assets (served by FastAPI StaticFiles)
 RUN mkdir -p /app/frontend
-COPY ["Quantum Sommelier.html", "data.js", "landing.jsx", "scanning.jsx", "tasting.jsx", "overlays.jsx", "styles.css", "styles-components.css", "styles-tasting.css", "styles-cork.css", "/app/frontend/"]
+COPY ["Quantum Sommelier.html", "favicon.svg", "data.js", "landing.jsx", "scanning.jsx", "tasting.jsx", "overlays.jsx", "styles.css", "styles-components.css", "styles-tasting.css", "styles-cork.css", "/app/frontend/"]
 
 # Supervisor config
 COPY supervisord.conf /etc/supervisor/conf.d/qs.conf
