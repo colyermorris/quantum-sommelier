@@ -6,10 +6,16 @@ __pycache__
 .pytest_cache
 .mypy_cache
 node_modules
+dist
 .env
 .env.*
 !.env.example
 notes.md
+handoff.md
+rollback.md
+deployment.md
 CLAUDE.md
 Markdown text file*.md
 logo.png
+*.pdf
+PageSpeed Insights*.pdf

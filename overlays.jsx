@@ -1,6 +1,9 @@
 /* Vineyard drawer, Cork modal, Tweaks panel */
 
-function VineyardDrawer({ tasting, openId, onClose, onSelectFinding }) {
+import React from 'react';
+import { CorkCard, FindingDetail } from './tasting.jsx';
+
+export function VineyardDrawer({ tasting, openId, onClose, onSelectFinding }) {
   const [activeId, setActiveId] = React.useState(openId);
   React.useEffect(() => { if (openId) setActiveId(openId); }, [openId]);
 
@@ -16,28 +19,34 @@ function VineyardDrawer({ tasting, openId, onClose, onSelectFinding }) {
 
   return (
     <div className="drawer-overlay" onClick={onClose}>
-      <aside className="vineyard-drawer" onClick={(e) => e.stopPropagation()}>
+      <aside className="vineyard-drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Vineyard notes">
         <header className="vd-header">
           <div>
             <div className="uppercase-label">Vineyard Notes</div>
             <h3 className="vd-title display">The paperwork behind the prose.</h3>
           </div>
-          <button className="vd-close" onClick={onClose} aria-label="Close">×</button>
+          <button className="vd-close" onClick={onClose} aria-label="Close vineyard notes">
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
+              <path d="M4 4l10 10M14 4L4 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            </svg>
+          </button>
         </header>
 
-        <nav className="vd-nav">
+        <ul className="vd-nav" role="list">
           {findings.map(f => (
-            <button
-              key={f.id}
-              className={`vd-nav-item ${active.id === f.id ? 'is-active' : ''}`}
-              onClick={() => setActiveId(f.id)}
-            >
-              <span className={`sev-chip sev-${f.severity}`} />
-              <span className="vd-nav-id mono">{f.id}</span>
-              <span className="vd-nav-short">{f.short}</span>
-            </button>
+            <li key={f.id}>
+              <button
+                className={`vd-nav-item ${active.id === f.id ? 'is-active' : ''}`}
+                onClick={() => setActiveId(f.id)}
+                aria-current={active.id === f.id ? 'true' : undefined}
+              >
+                <span className={`sev-chip sev-${f.severity}`} aria-hidden />
+                <span className="vd-nav-id mono">{f.id}</span>
+                <span className="vd-nav-short">{f.short}</span>
+              </button>
+            </li>
           ))}
-        </nav>
+        </ul>
 
         <div className="vd-body">
           <FindingDetail f={active} />
@@ -47,7 +56,7 @@ function VineyardDrawer({ tasting, openId, onClose, onSelectFinding }) {
   );
 }
 
-function CorkModal({ tasting, jobId, onClose }) {
+export function CorkModal({ tasting, jobId, onClose }) {
   const [copied, setCopied] = React.useState(false);
   const [imgLoaded, setImgLoaded] = React.useState(false);
   const [imgFailed, setImgFailed] = React.useState(false);
@@ -70,13 +79,17 @@ function CorkModal({ tasting, jobId, onClose }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="cork-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="cork-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Share tasting">
         <header className="cork-modal-head">
           <div>
             <div className="uppercase-label">The Cork</div>
             <h3 className="display">Share this tasting.</h3>
           </div>
-          <button className="vd-close" onClick={onClose} aria-label="Close">×</button>
+          <button className="vd-close" onClick={onClose} aria-label="Close share dialog">
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
+              <path d="M4 4l10 10M14 4L4 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            </svg>
+          </button>
         </header>
 
         <div className="cork-modal-body">
@@ -88,6 +101,8 @@ function CorkModal({ tasting, jobId, onClose }) {
                 className={`cork-preview-img ${imgLoaded ? 'is-loaded' : ''}`}
                 onLoad={() => setImgLoaded(true)}
                 onError={() => setImgFailed(true)}
+                loading="lazy"
+                decoding="async"
               />
             ) : (
               <CorkCard tasting={tasting} size="large" />
@@ -135,19 +150,24 @@ function CorkModal({ tasting, jobId, onClose }) {
   );
 }
 
-function TweaksPanel({ tweaks, setTweaks, onClose }) {
+export function TweaksPanel({ tweaks, setTweaks, onClose }) {
   const Option = ({ group, value, label }) => (
     <button
       className={`tw-opt ${tweaks[group] === value ? 'is-on' : ''}`}
       onClick={() => setTweaks({ ...tweaks, [group]: value })}
+      aria-pressed={tweaks[group] === value}
     >{label}</button>
   );
 
   return (
-    <div className="tweaks-panel">
+    <div className="tweaks-panel" role="dialog" aria-label="Design tweaks">
       <header className="tw-head">
         <div className="display tw-title">Tweaks</div>
-        <button className="vd-close" onClick={onClose} aria-label="Close">×</button>
+        <button className="vd-close" onClick={onClose} aria-label="Close tweaks">
+          <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
+            <path d="M4 4l10 10M14 4L4 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+          </svg>
+        </button>
       </header>
       <div className="tw-body">
         <div className="tw-group">
@@ -210,7 +230,3 @@ function TweaksPanel({ tweaks, setTweaks, onClose }) {
     </div>
   );
 }
-
-window.VineyardDrawer = VineyardDrawer;
-window.CorkModal = CorkModal;
-window.TweaksPanel = TweaksPanel;

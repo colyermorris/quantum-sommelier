@@ -1,7 +1,23 @@
 # Quantum Sommelier — single-container deploy.
 # Runs Redis + FastAPI (uvicorn) + Celery worker under supervisord.
-# Expose port 8080 and mount a .env with your keys.
+# Stage 1 builds the frontend bundle; stage 2 runs it.
 
+# ── Stage 1: frontend build ────────────────────────────────────
+FROM node:20-alpine AS frontend
+WORKDIR /build
+
+# Install deps first for better cache
+COPY package.json package-lock.json* ./
+RUN npm install --no-audit --no-fund --silent
+
+# Copy frontend sources and build
+COPY app.jsx api.js data.js edu.js ./
+COPY landing.jsx scanning.jsx tasting.jsx overlays.jsx ./
+COPY styles.css styles-components.css styles-tasting.css styles-cork.css styles-mobile.css ./
+COPY ["Quantum Sommelier.html", "favicon.svg", "build.mjs", "./"]
+RUN node build.mjs
+
+# ── Stage 2: runtime ───────────────────────────────────────────
 FROM python:3.12-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -39,9 +55,9 @@ RUN pip install --upgrade pip \
 # Copy backend source
 COPY backend /app/backend
 
-# Copy frontend assets (served by FastAPI StaticFiles)
+# Copy frontend bundle from stage 1
 RUN mkdir -p /app/frontend
-COPY ["Quantum Sommelier.html", "favicon.svg", "data.js", "landing.jsx", "scanning.jsx", "tasting.jsx", "overlays.jsx", "styles.css", "styles-components.css", "styles-tasting.css", "styles-cork.css", "/app/frontend/"]
+COPY --from=frontend /build/dist/ /app/frontend/
 
 # Supervisor config
 COPY supervisord.conf /etc/supervisor/conf.d/qs.conf

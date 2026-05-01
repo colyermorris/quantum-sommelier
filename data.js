@@ -1,7 +1,7 @@
 // Static frontend data — headlines, scanning stage copy, and a fallback
 // trending list used while /api/v1/trending is in flight.
 
-window.HERO_HEADLINES = [
+export const HERO_HEADLINES = [
   { main: "Paste a repo.",              sub: "Get a tasting note." },
   { main: "What vintage",               sub: "is your cryptography?" },
   { main: "Let's see",                  sub: "what you're running." },
@@ -29,7 +29,7 @@ window.HERO_HEADLINES = [
   { main: "The quantum clock",          sub: "is already ticking." }
 ];
 
-window.TRENDING_REPOS = [
+export const TRENDING_REPOS = [
   { name: 'juhoen/hybrid-crypto-js',    owner: 'juhoen',        url: 'https://github.com/juhoen/hybrid-crypto-js',        lang: 'JavaScript', stars: 144,  blurb: 'RSA + AES hybrid encryption for Node, React Native, and browsers.' },
   { name: 'openpgpjs/openpgpjs',        owner: 'openpgpjs',     url: 'https://github.com/openpgpjs/openpgpjs',            lang: 'JavaScript', stars: 5900, blurb: 'OpenPGP implementation for JavaScript — signing, encryption, keys.' },
   { name: 'digitalbazaar/forge',        owner: 'digitalbazaar', url: 'https://github.com/digitalbazaar/forge',            lang: 'JavaScript', stars: 5200, blurb: 'node-forge — TLS, ASN.1, RSA, ECC, hashes, all in pure JS.' },
@@ -37,7 +37,7 @@ window.TRENDING_REPOS = [
   { name: 'jpadilla/pyjwt',             owner: 'jpadilla',      url: 'https://github.com/jpadilla/pyjwt',                 lang: 'Python',     stars: 5300, blurb: 'JSON Web Token implementation for Python — HS256, RS256, ES256.' }
 ];
 
-window.SCANNING_STAGES = [
+export const SCANNING_STAGES = [
   {
     key: 'fetch',
     label: 'Cloning the vineyard',

@@ -1,5 +1,7 @@
 /* Tasting result — the main editorial magazine layout */
 
+import React from 'react';
+
 function hydrateText(text, findings, onFindingClick) {
   // Replace {{ref:ID}} with <a> and {{grade}} pill handled by caller
   const parts = text.split(/(\{\{ref:[^}]+\}\}|\{\{grade\}\}|`[^`]+`)/g);
@@ -95,12 +97,12 @@ function TastingProse({ text, findings, onFindingClick, grade, gradeVariant }) {
   );
 }
 
-function TastingResult({ tasting, jobId, onBack, onFindingClick, openVineyard, onOpenCork, tweaks }) {
+export function TastingResult({ tasting, jobId, onBack, onFindingClick, openVineyard, onOpenCork, tweaks }) {
   const findings = tasting.findings;
   const axes = tasting.score.axes;
 
   return (
-    <article className="tasting-article">
+    <main id="main"><article className="tasting-article">
       {/* Masthead — repo label + meta */}
       <header className="tasting-masthead">
         <button className="back-link" onClick={onBack}>
@@ -169,7 +171,7 @@ function TastingResult({ tasting, jobId, onBack, onFindingClick, openVineyard, o
 
       {/* Main layout — prose on the left, stats on the right */}
       <div className="tasting-grid">
-        <main className="tasting-main">
+        <div className="tasting-main">
           <section className="tasting-section" style={{ animationDelay: '0ms' }}>
             <SectionHeader label="The Nose" ornament={tweaks.ornament} />
             <div className="tasting-prose drop-cap">
@@ -215,7 +217,7 @@ function TastingResult({ tasting, jobId, onBack, onFindingClick, openVineyard, o
               </aside>
             </div>
           </section>
-        </main>
+        </div>
 
         <aside className="tasting-sidebar">
           <ScoreCard tasting={tasting} chartStyle={tweaks.scoreChart} />
@@ -227,7 +229,7 @@ function TastingResult({ tasting, jobId, onBack, onFindingClick, openVineyard, o
       {/* Full-width sections below the grid */}
       <CorkFeature tasting={tasting} jobId={jobId} onExpand={onOpenCork} />
       <FindingsAccordion findings={findings} onFindingClick={onFindingClick} />
-    </article>
+    </article></main>
   );
 }
 
@@ -382,7 +384,7 @@ function CorkFeature({ tasting, jobId, onExpand }) {
   );
 }
 
-function CorkCard({ tasting, size='default' }) {
+export function CorkCard({ tasting, size='default' }) {
   const axes = tasting.score.axes;
   const grade = tasting.score.letter_grade;
   const shelfLife = {
@@ -540,7 +542,7 @@ function FindingsAccordion({ findings, onFindingClick }) {
   );
 }
 
-function FindingDetail({ f }) {
+export function FindingDetail({ f }) {
   return (
     <div className="finding-detail" id={f.id}>
       <div className="fd-meta">
@@ -575,6 +577,3 @@ function FindingDetail({ f }) {
   );
 }
 
-window.TastingResult = TastingResult;
-window.CorkCard = CorkCard;
-window.FindingDetail = FindingDetail;

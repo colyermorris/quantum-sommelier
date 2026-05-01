@@ -2,7 +2,9 @@
    Maps API stages (fetching/scanning/judging/scoring/synthesizing/validating)
    onto the 5 editorial stages the UI already has. */
 
-const STAGES = window.SCANNING_STAGES;
+import React from 'react';
+import { SCANNING_STAGES } from './data.js';
+import { QS_API } from './api.js';
 
 const STAGE_MAP = {
   fetching: 0,
@@ -13,15 +15,14 @@ const STAGE_MAP = {
   validating: 4,
 };
 
-function Scanning({ repoSlug, jobId, onDone, onCancel, onError, tweaks }) {
+export function Scanning({ repoSlug, jobId, onDone, onCancel, onError, tweaks }) {
   const [stageIdx, setStageIdx] = React.useState(0);
   const [subIdx, setSubIdx] = React.useState(0);
   const [progress, setProgress] = React.useState(5);
 
   React.useEffect(() => {
-    const subs = STAGES[stageIdx]?.subs || [];
+    const subs = SCANNING_STAGES[stageIdx]?.subs || [];
     if (!subs.length) return;
-    // Start at a random sub so different stages don't always begin with the same line.
     setSubIdx(Math.floor(Math.random() * subs.length));
     const t = setInterval(() => setSubIdx((s) => (s + 1) % subs.length), 3200);
     return () => clearInterval(t);
@@ -35,10 +36,10 @@ function Scanning({ repoSlug, jobId, onDone, onCancel, onError, tweaks }) {
       if (!alive) return;
       ticks += 1;
       try {
-        const data = await window.QS_API.pollTasting(jobId);
+        const data = await QS_API.pollTasting(jobId);
         if (!alive) return;
         if (data.status === 'complete') {
-          setStageIdx(STAGES.length - 1);
+          setStageIdx(SCANNING_STAGES.length - 1);
           setProgress(100);
           setTimeout(() => { if (alive) onDone(data.tasting); }, 400);
           return;
@@ -69,7 +70,7 @@ function Scanning({ repoSlug, jobId, onDone, onCancel, onError, tweaks }) {
   }, [jobId, onDone, onError]);
 
   return (
-    <div className="scanning">
+    <main className="scanning" id="main" aria-live="polite">
       <div className="scanning-top">
         <div className="uppercase-label">In the cellar</div>
         <h1 className="scanning-repo mono">{repoSlug}</h1>
@@ -77,7 +78,7 @@ function Scanning({ repoSlug, jobId, onDone, onCancel, onError, tweaks }) {
       </div>
 
       <ol className="stage-list">
-        {STAGES.map((stage, i) => {
+        {SCANNING_STAGES.map((stage, i) => {
           const state = i < stageIdx ? 'done' : i === stageIdx ? 'active' : 'pending';
           return (
             <li key={stage.key} className={`stage stage--${state}`}>
@@ -115,14 +116,12 @@ function Scanning({ repoSlug, jobId, onDone, onCancel, onError, tweaks }) {
         })}
       </ol>
 
-      <div className="scanning-bar">
+      <div className="scanning-bar" role="progressbar" aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100">
         <div className="scanning-bar-fill" style={{ width: `${progress}%` }} />
         <div className="scanning-bar-label mono">{progress}%</div>
       </div>
 
       <button className="btn-ghost" onClick={onCancel}>Cancel the pour</button>
-    </div>
+    </main>
   );
 }
-
-window.Scanning = Scanning;

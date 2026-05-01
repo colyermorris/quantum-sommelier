@@ -1,20 +1,21 @@
 /* Landing page — hero + trending (live from /api/v1/trending) */
 
-const HEADLINES = window.HERO_HEADLINES;
-const TRENDING_FALLBACK = window.TRENDING_REPOS;
+import React from 'react';
+import { HERO_HEADLINES, TRENDING_REPOS } from './data.js';
+import { QS_API } from './api.js';
 
-function Landing({ onScan, tweaks, rateLimitMsg }) {
-  const [headlineIdx, setHeadlineIdx] = React.useState(() => Math.floor(Math.random() * HEADLINES.length));
+export function Landing({ onScan, tweaks, rateLimitMsg }) {
+  const [headlineIdx, setHeadlineIdx] = React.useState(() => Math.floor(Math.random() * HERO_HEADLINES.length));
   const [url, setUrl] = React.useState('');
   const [err, setErr] = React.useState('');
-  const [trending, setTrending] = React.useState(TRENDING_FALLBACK);
+  const [trending, setTrending] = React.useState(TRENDING_REPOS);
   const headline = tweaks.heroHeadline === 'random'
-    ? HEADLINES[headlineIdx]
-    : HEADLINES[Number(tweaks.heroHeadline)] || HEADLINES[0];
+    ? HERO_HEADLINES[headlineIdx]
+    : HERO_HEADLINES[Number(tweaks.heroHeadline)] || HERO_HEADLINES[0];
 
   React.useEffect(() => {
     let alive = true;
-    window.QS_API.trending().then((items) => {
+    QS_API.trending().then((items) => {
       if (alive && Array.isArray(items) && items.length) setTrending(items);
     }).catch(() => {});
     return () => { alive = false; };
@@ -43,7 +44,7 @@ function Landing({ onScan, tweaks, rateLimitMsg }) {
   const handleQuickScan = (slug) => { setUrl(slug); setErr(''); onScan(slug); };
 
   return (
-    <div className="landing">
+    <main className="landing" id="main">
       <section className="hero">
         <div className="issue-marker">
           <span className="issue-num">ISSUE Nº 0027</span>
@@ -66,8 +67,10 @@ function Landing({ onScan, tweaks, rateLimitMsg }) {
 
         <form className="hero-form" onSubmit={handleSubmit}>
           <div className={`url-field ${err || rateLimitMsg ? 'url-field--err' : ''}`}>
-            <span className="url-prefix">github.com/</span>
+            <span className="url-prefix" aria-hidden>github.com/</span>
+            <label htmlFor="repo-url" className="visually-hidden">GitHub repository</label>
             <input
+              id="repo-url"
               type="text"
               className="url-input"
               placeholder="owner/repo or paste full URL"
@@ -81,6 +84,7 @@ function Landing({ onScan, tweaks, rateLimitMsg }) {
               }}
               spellCheck={false}
               autoComplete="off"
+              inputMode="url"
             />
             <button type="submit" className="btn-taste">
               <span>Taste This</span>
@@ -89,17 +93,17 @@ function Landing({ onScan, tweaks, rateLimitMsg }) {
               </svg>
             </button>
           </div>
-          {err ? <p className="url-err">{err}</p> : rateLimitMsg ? (
-            <p className="url-err">{rateLimitMsg}</p>
+          {err ? <p className="url-err" role="alert">{err}</p> : rateLimitMsg ? (
+            <p className="url-err" role="alert">{rateLimitMsg}</p>
           ) : (
             <p className="url-note">Public GitHub repos only. We clone, scan, delete. We never install your dependencies.</p>
           )}
         </form>
       </section>
 
-      <section className="trending">
+      <section className="trending" aria-labelledby="trending-heading">
         <header className="trending-head">
-          <span className="uppercase-label">Rising on GitHub</span>
+          <h2 id="trending-heading" className="uppercase-label">Rising on GitHub</h2>
           <span className="trending-kicker">Fresh repos, tastable in one click.</span>
         </header>
         <ul className="trending-list">
@@ -110,7 +114,8 @@ function Landing({ onScan, tweaks, rateLimitMsg }) {
               onClick={() => handleQuickScan(repo.name)}
               role="button"
               tabIndex="0"
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleQuickScan(repo.name); }}
+              aria-label={`Taste ${repo.name}`}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleQuickScan(repo.name); } }}
             >
               <span className="trending-rank">{String(i+1).padStart(2, '0')}</span>
               <span className="trending-name">{repo.name}</span>
@@ -127,7 +132,8 @@ function Landing({ onScan, tweaks, rateLimitMsg }) {
         </ul>
       </section>
 
-      <section className="faq">
+      <section className="faq" aria-labelledby="faq-heading">
+        <h2 id="faq-heading" className="visually-hidden">Frequently asked</h2>
         <div className="faq-row">
           <div>
             <div className="uppercase-label">What does this scan</div>
@@ -143,8 +149,6 @@ function Landing({ onScan, tweaks, rateLimitMsg }) {
           </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }
-
-window.Landing = Landing;

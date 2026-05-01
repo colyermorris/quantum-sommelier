@@ -29,8 +29,12 @@ Thumbs.db
 # Ephemeral scan working dir
 /tmp/qs-work/
 
-# Node
+# Node / build output
 node_modules/
+dist/
+
+# PageSpeed reports
+PageSpeed Insights*.pdf
 
 # Claude / memory / prompt log
 .claude/

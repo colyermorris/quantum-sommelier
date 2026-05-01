@@ -9,7 +9,7 @@
   /* Ink */
   --color-ink:         #2C2420;
   --color-graphite:    #5C534A;
-  --color-clay:        #8A7E72;
+  --color-clay:        #6A5F54;  /* darkened from #8A7E72 to pass WCAG 4.5:1 against linen */
 
   /* Accents */
   --color-oxblood:     #722F37;

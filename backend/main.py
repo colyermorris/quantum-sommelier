@@ -8,7 +8,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import Body, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 
@@ -45,6 +46,9 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# Gzip everything ≥ 1 KB. Significant for HTML/CSS/JS/JSON.
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 
 # ── API ────────────────────────────────────────────────────────
@@ -176,16 +180,69 @@ def cork_svg(job_id: str) -> Response:
     )
 
 
+# ── SEO endpoints (registered before the SPA fallback) ─────────
+
+_ROBOTS_TXT = (
+    "User-agent: *\n"
+    "Allow: /\n"
+    "Disallow: /api/\n"
+    "Sitemap: https://quantum-sommelier.charlesmorris.dev/sitemap.xml\n"
+)
+
+_SITEMAP_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://quantum-sommelier.charlesmorris.dev/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+"""
+
+
+@app.get("/robots.txt", include_in_schema=False)
+def robots_txt() -> PlainTextResponse:
+    return PlainTextResponse(
+        _ROBOTS_TXT,
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+def sitemap_xml() -> Response:
+    return Response(
+        content=_SITEMAP_XML,
+        media_type="application/xml",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
 # ── Static frontend ────────────────────────────────────────────
 
 _FRONTEND = Path(SETTINGS.frontend_dir)
+
+# Asset extension → cache policy. Hashed bundle output gets immutable; the
+# HTML shell never caches because it's the entry point that references the
+# hashed bundles.
+_IMMUTABLE_EXTS = {".js", ".css", ".woff", ".woff2", ".svg", ".png", ".jpg", ".webp", ".ico"}
+
+
+def _cache_headers_for(path: Path) -> dict[str, str]:
+    if path.suffix.lower() == ".html":
+        return {"Cache-Control": "no-cache, must-revalidate"}
+    if path.suffix.lower() in _IMMUTABLE_EXTS:
+        return {"Cache-Control": "public, max-age=31536000, immutable"}
+    return {"Cache-Control": "public, max-age=3600"}
+
+
 if _FRONTEND.is_dir():
     # Serve frontend from root; any path that isn't /api falls through here.
     app.mount("/assets", StaticFiles(directory=str(_FRONTEND)), name="assets")
 
     @app.get("/")
     def root() -> FileResponse:
-        return FileResponse(str(_FRONTEND / "Quantum Sommelier.html"))
+        html = _FRONTEND / "Quantum Sommelier.html"
+        return FileResponse(str(html), headers=_cache_headers_for(html))
 
     @app.get("/{full_path:path}")
     def static_fallback(full_path: str) -> FileResponse:
@@ -193,6 +250,7 @@ if _FRONTEND.is_dir():
             raise HTTPException(status_code=404)
         candidate = _FRONTEND / full_path
         if candidate.is_file():
-            return FileResponse(str(candidate))
-        # SPA fallback — return the main HTML
-        return FileResponse(str(_FRONTEND / "Quantum Sommelier.html"))
+            return FileResponse(str(candidate), headers=_cache_headers_for(candidate))
+        # SPA fallback — return the main HTML (no-cache so users always get the latest shell).
+        html = _FRONTEND / "Quantum Sommelier.html"
+        return FileResponse(str(html), headers=_cache_headers_for(html))
